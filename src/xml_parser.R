@@ -56,6 +56,11 @@ p_RD_DATA <- "(RD_DATA\\[)([0-9]+)(\\]$)"
 gsub(p_RD_DATA, "\\1", xml_path(y))
 
 xml_path(y) 
-m <- gregexpr(p_RD_OUT, xml_path(y))
-     regmatches(xml_path(y), m)
+m <- gregexpr(p_RD_DATA, xml_path(y))
+  L1 <-   regmatches(xml_path(y), m)
+
+which(is.na(L1))
+?unlist
+L2 <- as.numeric(L1)
+ unlist(lapply(L1, function(x) ifelse(is.null(x), NA, x)))
 
