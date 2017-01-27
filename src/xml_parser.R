@@ -2,12 +2,15 @@ library(data.table)
 library(xml2)
 
 help(package = 'xml2')
-?xml_serialize
 
 
 list_with_na <-
     function(L)
-      lapply(L, function(x) ifelse(is.null(x), NA, x))
+      unlist(lapply(L, function(x) ifelse(is.null(x), NA, x)))
+
+rep_name <-
+  function(name_list, num_reps)
+    unlist(mapply(rep, name_list, num_reps))
 
 raw_xml <- 
   read_xml("../data/CD001820RawData.xml")
@@ -34,9 +37,6 @@ rd_sub <-
 rd_data <-
   xml_find_all(raw_xml, "//RD_DATA")
 
-xml_text(rd_out)
-
-
 r_comp <- gregexpr("RD_COMP\\[([0-9]+)\\]", path_rd_data)
 l_comp <- regmatches(path_rd_data, r_comp)
 
@@ -55,14 +55,23 @@ xml_data <-
              RD_SUB = list_with_na(l_sub),
              RD_data = list_with_na(l_data))
 
-xml_data
+
+text_comp <- xml_text(rd_comp)
+text_out <- xml_text(rd_out)
+text_sub <- xml_text(rd_sub)
+
+l_NAME_COMP <- rep_name(text_comp, xml_data[, .N, by = RD_COMP][,N])
+xml_data[, NAME_COMP := l_NAME_COMP]
+
+l_NAME_OUT <- rep_name(text_out, xml_data[, .N, by = .(RD_COMP, RD_OUT)][,N])
+xml_data[, NAME_OUT := l_NAME_OUT]
+
+l_NAME_SUB <- rep_name(text_sub, xml_data[, .N, by = .(RD_COMP, RD_OUT, RD_SUB)][,N])
+xml_data[, NAME_SUB := l_NAME_SUB]
 
 attr_list <- 
   sort(unique(unlist(lapply(xml_attrs(raw_rd_data), names))))
 
-length(attr_list)
-
-xml_data <- data.table()
 trash <- 
   lapply(attr_list, 
          function(attr_col){ 
@@ -71,24 +80,4 @@ trash <-
            NULL
          })
 
-tn <- 
-  xml_text(xml_find_all(raw_xml, "//NAME"))
-
-tn
-length(tn)
-text_NAME <- tn[tn != ""]
-
-rep_sizes <- 
-  xml_data[, .N, by = RD_OUT][, N]
-
-NAME_list <- 
-  unlist(
-    mapply(rep, 
-           text_NAME[2:length(text_NAME)], 
-           rep_sizes)
-    )
-
-length(NAME_list)
-xml_data[, NAME := NAME_list]
-xml_data[, TITLE := xml_text(xml_find_all(db, "//TITLE"))]
 xml_data
