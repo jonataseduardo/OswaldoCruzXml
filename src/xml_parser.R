@@ -11,26 +11,26 @@ rep_name <-
   function(name_list, num_reps)
       unlist(mapply(rep, name_list, num_reps))
 
-raw_xml <- 
-  read_xml("../data/CD003407RawData.xml")
+xml <- 
+  read_xml("../data/CD002010RawData.xml")
 
 raw_rd_data <- 
-  xml_find_all(raw_xml, "//RD_DATA")
+  xml_find_all(xml, "//RD_DATA")
 
 path_rd_data <- 
   xml_path(raw_rd_data)
 
 rd_comp <-
-  xml_find_all(raw_xml, "//RD_COMP")
+  xml_find_all(xml, "//RD_COMP")
 
 rd_out <-
-  xml_find_all(raw_xml, "//RD_OUT")
+  xml_find_all(xml, "//RD_OUT")
 
 rd_sub <-
-  xml_find_all(raw_xml, "//RD_SUB")
+  xml_find_all(xml, "//RD_SUB")
 
 rd_data <-
-  xml_find_all(raw_xml, "//RD_DATA")
+  xml_find_all(xml, "//RD_DATA")
 
 r_comp <- gregexpr("RD_COMP\\[([0-9]+)\\]", path_rd_data)
 l_comp <- regmatches(path_rd_data, r_comp)
