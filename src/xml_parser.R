@@ -3,27 +3,22 @@ library(xml2)
 
 help(package = 'xml2')
 
-
 list_with_na <-
     function(L)
       unlist(lapply(L, function(x) ifelse(is.null(x), NA, x)))
 
 rep_name <-
   function(name_list, num_reps)
-    unlist(mapply(rep, name_list, num_reps))
+      unlist(mapply(rep, name_list, num_reps))
 
 raw_xml <- 
-  read_xml("../data/CD001820RawData.xml")
+  read_xml("../data/CD003407RawData.xml")
 
 raw_rd_data <- 
   xml_find_all(raw_xml, "//RD_DATA")
 
-raw_rd_data
-
 path_rd_data <- 
   xml_path(raw_rd_data)
-
-path_rd_data
 
 rd_comp <-
   xml_find_all(raw_xml, "//RD_COMP")
@@ -55,7 +50,7 @@ xml_data <-
              RD_SUB = list_with_na(l_sub),
              RD_data = list_with_na(l_data))
 
-
+text_comp[1]
 text_comp <- xml_text(rd_comp)
 text_out <- xml_text(rd_out)
 text_sub <- xml_text(rd_sub)
