@@ -11,14 +11,14 @@ rep_name <-
   function(name_list, num_reps)
       unlist(mapply(rep, name_list, num_reps))
 
-xml <- 
-  read_xml("../data/CD002010RawData.xml")
+xml <- read_xml("../data/CD002010RawData.xml")
 
 raw_rd_data <- 
   xml_find_all(xml, "//RD_DATA")
 
 path_rd_data <- 
   xml_path(raw_rd_data)
+
 
 rd_comp <-
   xml_find_all(xml, "//RD_COMP")
@@ -50,8 +50,11 @@ xml_data <-
              RD_SUB = list_with_na(l_sub),
              RD_data = list_with_na(l_data))
 
-text_comp[1]
-text_comp <- xml_text(rd_comp)
+xml_path(xml_find_all(xml, '//NAME'))
+
+
+nl <- xml_find_all(xml, '//NAME')
+text_comp <- xml_text(xml_find_first(xml_siblings(rd_comp), '//NAME'))
 text_out <- xml_text(rd_out)
 text_sub <- xml_text(rd_sub)
 
@@ -76,3 +79,15 @@ trash <-
          })
 
 xml_data
+
+grplabel1 <-
+  xml_find_all(xml, "//GRPLABEL1")
+
+grplabel2 <-
+  xml_find_all(xml, "//GRPLABEL2")
+
+glabel1 <-
+  xml_find_all(xml, "//GLABEL1")
+
+glabel2 <-
+  xml_find_all(xml, "//GLABEL2")
