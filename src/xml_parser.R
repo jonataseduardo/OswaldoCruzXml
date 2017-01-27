@@ -7,6 +7,13 @@ list_with_na <-
     function(L)
       unlist(lapply(L, function(x) ifelse(is.null(x), NA, x)))
 
+list_no_gap <-
+    function(L, gap_key){
+      Lout <- unlist(lapply(L, function(x) ifelse(is.null(x), NA, x)))
+      Lout[is.na(Lout)] <- gap_key
+      Lout
+    }
+
 rep_name <-
   function(name_list, num_reps)
       unlist(mapply(rep, name_list, num_reps))
@@ -45,13 +52,17 @@ r_data <- gregexpr("RD_DATA\\[([0-9]+)\\]$", path_rd_data)
 l_data <- regmatches(path_rd_data, r_data)
 
 xml_data <- 
-  data.table(RD_COMP = list_with_na(l_comp),
-             RD_OUT = list_with_na(l_out), 
-             RD_SUB = list_with_na(l_sub),
-             RD_data = list_with_na(l_data))
+  data.table(RD_COMP = list_no_gap(l_comp, 'RD_COMP'),
+             RD_OUT = list_no_gap(l_out, 'RD_OUT'), 
+             RD_SUB = list_no_gap(l_sub, 'RD_SUB'),
+             RD_DATA = list_no_gap(l_data, 'RD_DATA'))
+
+xml_data[1:50]
 
 xml_path(xml_find_all(xml, '//NAME'))
+xc <- xml_child
 
+xml_path(xml_siblings(xc(xc(xml))))
 
 nl <- xml_find_all(xml, '//NAME')
 text_comp <- xml_text(xml_find_first(xml_siblings(rd_comp), '//NAME'))
