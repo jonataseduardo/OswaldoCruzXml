@@ -20,13 +20,6 @@ rep_name <-
 
 xml <- read_xml("../data/CD002010RawData.xml")
 
-raw_rd_data <- 
-  xml_find_all(xml, "//RD_DATA")
-
-path_rd_data <- 
-  xml_path(raw_rd_data)
-
-
 rd_comp <-
   xml_find_all(xml, "//RD_COMP")
 
@@ -36,60 +29,40 @@ rd_out <-
 rd_sub <-
   xml_find_all(xml, "//RD_SUB")
 
+
+l_name <- 
+  xml_find_all(xml, "//NAME")
+
+path_name <- 
+  xml_path(l_name)
+
+
 rd_data <-
   xml_find_all(xml, "//RD_DATA")
 
-r_comp <- gregexpr("RD_COMP\\[([0-9]+)\\]", path_rd_data)
-l_comp <- regmatches(path_rd_data, r_comp)
+p_rd_data <- 
+  xml_path(rd_data)
 
-r_out <- gregexpr("RD_OUT\\[([0-9]+)\\]" , path_rd_data)
-l_out <- regmatches(path_rd_data, r_out)
+DT_data <-  data.table(idx = 1:length(p_rd_data))
 
-r_sub <- gregexpr("RD_SUB\\[([0-9]+)\\]", path_rd_data)
-l_sub <- regmatches(path_rd_data, r_sub)
+DT_data[, 
+         c('root', 'review', 'raw_data', 'rd_comp', 'rd_out', 'rd_sub', 'rd_data') := tstrsplit(p_rd_data, "/")]
 
-r_data <- gregexpr("RD_DATA\\[([0-9]+)\\]$", path_rd_data)
-l_data <- regmatches(path_rd_data, r_data)
+DT_data[, c('idx', 'root') := NULL]
 
-xml_data <- 
-  data.table(RD_COMP = list_no_gap(l_comp, 'RD_COMP'),
-             RD_OUT = list_no_gap(l_out, 'RD_OUT'), 
-             RD_SUB = list_no_gap(l_sub, 'RD_SUB'),
-             RD_DATA = list_no_gap(l_data, 'RD_DATA'))
+DT_data
 
-xml_data[1:50]
-
-xml_path(xml_find_all(xml, '//NAME'))
-xc <- xml_child
-
-xml_path(xml_siblings(xc(xc(xml))))
-
-nl <- xml_find_all(xml, '//NAME')
-text_comp <- xml_text(xml_find_first(xml_siblings(rd_comp), '//NAME'))
-text_out <- xml_text(rd_out)
-text_sub <- xml_text(rd_sub)
-
-l_NAME_COMP <- rep_name(text_comp, xml_data[, .N, by = RD_COMP][,N])
-xml_data[, NAME_COMP := l_NAME_COMP]
-
-l_NAME_OUT <- rep_name(text_out, xml_data[, .N, by = .(RD_COMP, RD_OUT)][,N])
-xml_data[, NAME_OUT := l_NAME_OUT]
-
-l_NAME_SUB <- rep_name(text_sub, xml_data[, .N, by = .(RD_COMP, RD_OUT, RD_SUB)][,N])
-xml_data[, NAME_SUB := l_NAME_SUB]
-
-attr_list <- 
-  sort(unique(unlist(lapply(xml_attrs(raw_rd_data), names))))
+attr_data <- 
+  sort(unique(unlist(lapply(xml_attrs(rd_data), names))))
 
 trash <- 
-  lapply(attr_list, 
+  lapply(attr_data, 
          function(attr_col){ 
-           xml_data[, c(attr_col) := xml_attr(raw_rd_data, attr_col), 
-                    with = FALSE]
+           values <- xml_attr(rd_data, attr_col)
+           DT_data[, c(attr_col) := values]
            NULL
          })
 
-xml_data
 
 grplabel1 <-
   xml_find_all(xml, "//GRPLABEL1")
