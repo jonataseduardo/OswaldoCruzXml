@@ -6,49 +6,68 @@ help(package = 'xml2')
 
 
 list_with_na <-
-    lapply(L, function(x) ifelse(is.null(x), NA, x))
+    function(L)
+      lapply(L, function(x) ifelse(is.null(x), NA, x))
 
 raw_xml <- 
-  read_xml("../data/CD003407RawData.xml")
+  read_xml("../data/CD001820RawData.xml")
 
-RD_DATA <- xml_find_all(raw_xml, "//RD_DATA")
-RD_OUT <- xml_find_all(raw_xml, "//RD_OUT")
+raw_rd_data <- 
+  xml_find_all(raw_xml, "//RD_DATA")
+
+raw_rd_data
+
+path_rd_data <- 
+  xml_path(raw_rd_data)
+
+path_rd_data
+
+rd_comp <-
+  xml_find_all(raw_xml, "//RD_COMP")
+
+rd_out <-
+  xml_find_all(raw_xml, "//RD_OUT")
+
+rd_sub <-
+  xml_find_all(raw_xml, "//RD_SUB")
+
+rd_data <-
+  xml_find_all(raw_xml, "//RD_DATA")
+
+xml_text(rd_out)
 
 
-p_RD_COMP <- "RD_COMP\\[([0-9]+)\\]"
-p_RD_OUT <- "RD_OUT\\[([0-9]+)\\]"
-p_RD_SUB <- "RD_SUB\\[([0-9]+)\\]"
-p_RD_DATA <- "RD_DATA\\[([0-9]+)\\]$"
+r_comp <- gregexpr("RD_COMP\\[([0-9]+)\\]", path_rd_data)
+l_comp <- regmatches(path_rd_data, r_comp)
 
-path_RD_DATA <- xml_path(RD_DATA)
-path_RD_DATA[1:50]
+r_out <- gregexpr("RD_OUT\\[([0-9]+)\\]" , path_rd_data)
+l_out <- regmatches(path_rd_data, r_out)
 
-r_comp <- gregexpr(p_RD_COMP, path_RD_DATA)
-l_comp <- regmatches(path_RD_DATA, r0)
+r_sub <- gregexpr("RD_SUB\\[([0-9]+)\\]", path_rd_data)
+l_sub <- regmatches(path_rd_data, r_sub)
 
-r_out <- gregexpr(p_RD_OUT, path_RD_DATA)
-l_out <- regmatches(path_RD_DATA, r2)
-
-r_sub <- gregexpr(p_RD_SUB, path_RD_DATA)
-l_sub <- regmatches(path_RD_DATA, r2)
-
-r_data <- gregexpr(p_RD_DATA, path_RD_DATA)
-l_data <- regmatches(path_RD_DATA, r1)
+r_data <- gregexpr("RD_DATA\\[([0-9]+)\\]$", path_rd_data)
+l_data <- regmatches(path_rd_data, r_data)
 
 xml_data <- 
-  data.table(RD_COMP = list
-             RD_OUT = unlist(L2), 
-             RD_data = list_with_na(L1))
+  data.table(RD_COMP = list_with_na(l_comp),
+             RD_OUT = list_with_na(l_out), 
+             RD_SUB = list_with_na(l_sub),
+             RD_data = list_with_na(l_data))
 
 xml_data
 
 attr_list <- 
-  sort(unique(unlist(lapply(xml_attrs(RD_DATA), names))))
+  sort(unique(unlist(lapply(xml_attrs(raw_rd_data), names))))
 
+length(attr_list)
+
+xml_data <- data.table()
 trash <- 
   lapply(attr_list, 
          function(attr_col){ 
-           xml_data[, c(attr_col) := xml_attr(RD_DATA, attr_col), with = FALSE]
+           xml_data[, c(attr_col) := xml_attr(raw_rd_data, attr_col), 
+                    with = FALSE]
            NULL
          })
 
