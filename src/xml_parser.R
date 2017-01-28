@@ -26,15 +26,17 @@ ns_name <-
   xml_find_all(xml, "//NAME")
 
 p_name <- 
-  xml_path(l_name)
+  xml_path(ns_name)
+
+l_name <- 
+  xml_text(ns_name)
 
 p_name
-l_name <- xml_text(l_name)
 
 DT_name <- data.table(idx = 1:length(l_name))
 
 DT_name[, 
-         c('root', 'review', 'raw_sub', 'rd_comp', 'rd_out', 'rd_sub') := tstrsplit(p_name, "/")]
+        c('fuck', 'root', 'review', 'raw_sub', 'rd_comp', 'rd_out', 'rd_sub') := tstrsplit(p_name, "/")]
 
 DT_name[, c('idx', 'root') := NULL]
 
@@ -45,6 +47,7 @@ name_comp <-
 
 DT_name <- 
   merge(DT_name, name_comp, all = TRUE)
+
 DT_name[rd_out == 'NAME', rd_out := NA]
 
 ## set out name
