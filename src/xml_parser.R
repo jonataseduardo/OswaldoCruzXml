@@ -21,12 +21,59 @@ rep_name <-
 xml <- read_xml("../data/CD002010RawData.xml")
 
 
-l_name <- 
+## DATA NAMES
+ns_name <- 
   xml_find_all(xml, "//NAME")
 
-path_name <- 
+p_name <- 
   xml_path(l_name)
 
+p_name
+l_name <- xml_text(l_name)
+
+DT_name <- data.table(idx = 1:length(l_name))
+
+DT_name[, 
+         c('root', 'review', 'raw_sub', 'rd_comp', 'rd_out', 'rd_sub') := tstrsplit(p_name, "/")]
+
+DT_name[, c('idx', 'root') := NULL]
+
+## set comp name
+comp_idx <- grepl("RD_COMP(\\[[1-9]+\\])?/NAME$", p_name)
+name_comp <- 
+  DT_name[, .GRP, by = rd_comp][, `:=`(GRP = NULL, NAME_COMP = l_name[comp_idx])]
+
+DT_name <- 
+  merge(DT_name, name_comp, all = TRUE)
+DT_name[rd_out == 'NAME', rd_out := NA]
+
+## set out name
+out_idx <- grepl("RD_OUT(\\[[1-9]+\\])?/NAME$", p_name)
+name_out <- 
+  DT_name[!is.na(rd_out), .GRP, by = rd_out][, `:=`(GRP = NULL, NAME_OUT = l_name[out_idx])]
+
+name_out
+DT_name[!is.na(rd_out), .GRP, by = rd_out]
+l_name[out_idx]
+
+DT_name <- 
+  merge(DT_name, name_out, all = TRUE)
+
+DT_name[comp_idx, NAME_COMP := l_name[comp_idx]]
+DT_name[rd_out == 'NAME', rd_out := NA]
+
+
+
+
+sub_idx <- grepl("RD_SUB(\\[[1-9]+\\])?/NAME$", p_name)
+DT_name[out_idx, NAME_SUB := l_name[sub_idx]]
+
+DT_name
+names(DT_name)
+names(DT_data)
+
+x
+x <- merge(DT_name, DT_data, all.y = TRUE)
 
 ## RD_COMP
 rd_comp <-
@@ -55,7 +102,6 @@ trash <-
 
 DT_comp
 
-
 ## RD_OUT
 rd_out <-
   xml_find_all(xml, "//RD_OUT")
@@ -82,7 +128,6 @@ trash <-
          })
 
 DT_out
-
 
 ## RD_SUB
 rd_sub <-
@@ -111,7 +156,6 @@ trash <-
 
 DT_sub
 
-
 ## RD_DATA
 rd_data <-
   xml_find_all(xml, "//RD_DATA")
@@ -138,7 +182,6 @@ trash <-
            DT_data[, c(attr_col) := values]
            NULL
          })
-
 
 
 grplabel1 <-
