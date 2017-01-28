@@ -4,6 +4,8 @@ library(xml2)
 #help(package = 'xml2')
 
 xml <- read_xml("../data/CD002010RawData.xml")
+xml <- read_xml("../data/CD010388RawData.xml")
+#xml <- read_xml("../data/CD003407RawData.xml")
 
 ## DATA NAMES
 ns_name <- 
@@ -14,45 +16,55 @@ p_name <-
 
 l_name <- 
   xml_text(ns_name)
+p_name
 
 DT_name <- data.table(idx = 1:length(l_name))
-
 DT_name[, 
-        c('root', 'review', 'raw_data', 'rd_comp', 'rd_out', 'rd_sub') := tstrsplit(p_name, "/")]
+        c('root', 'review', 'raw_data', 'rd_comp', 'rd_out', 'rd_sub', 'name') := tstrsplit(p_name, "/")]
 
-DT_name[, c('idx', 'root', 'review') := NULL]
+DT_name[, c('idx', 'root', 'review', 'raw_data', 'name') := NULL]
 DT_name[rd_out == 'NAME', rd_out := NA]
 DT_name[rd_sub == 'NAME', rd_sub := NA]
 
 ## set comp name
-comp_idx <- grepl("RD_COMP(\\[[1-9]+\\])?/NAME$", p_name)
-DT_comp <- 
-  DT_name[, .GRP, by = rd_comp][, `:=`(GRP = NULL, NAME_COMP = l_name[comp_idx])][]
+comp_idx <- grepl("RD_COMP(\\[[0-9]+\\])?/NAME$", p_name)
 
-DT_name <- 
-  merge(DT_name, DT_comp, all = TRUE, by = c('rd_comp'))
+DP_comp <- data.table(idx = p_name[comp_idx], 
+                      NAME_COMP = l_name[comp_idx])
+DP_comp[, 
+        c('root', 'review', 'raw_data', 'rd_comp', 'name') := tstrsplit(idx, "/")]
 
-## set out name
-out_idx <- grepl("RD_OUT(\\[[0-9]+\\])?/NAME$", p_name)
-name_out <- 
-  DT_name[!is.na(rd_out), .GRP, by = .(rd_comp, rd_out)][, `:=`(GRP = NULL, NAME_OUT = l_name[out_idx])][]
+DP_comp[, c('idx', 'root', 'review', 'raw_data', 'name') := NULL]
 
 ## set out name
 out_idx <- grepl("RD_OUT(\\[[0-9]+\\])?/NAME$", p_name)
-DT_out <- 
-  DT_name[!is.na(rd_out), .GRP, by = .(rd_comp, rd_out)][, `:=`(GRP = NULL, NAME_OUT = l_name[out_idx])][]
 
-DT_name <- 
-  merge(DT_name, DT_out, all = TRUE, by = c('rd_comp', 'rd_out'))
+DP_out <- data.table(idx = p_name[out_idx], 
+                      NAME_OUT = l_name[out_idx])
+DP_out[, 
+        c('root', 'review', 'raw_data', 'rd_comp', 'rd_out', 'name') := tstrsplit(idx, "/")]
 
+DP_out[, c('idx', 'root', 'review', 'raw_data', 'name') := NULL]
 
 ## set sub name
 sub_idx <- grepl("RD_SUB(\\[[0-9]+\\])?/NAME$", p_name)
-DT_out <- 
-  DT_name[!is.na(rd_sub), .GRP, by = .(rd_comp, rd_out, rd_sub)][, `:=`(GRP = NULL, NAME_SUB = l_name[sub_idx])][]
 
-DT_name <- 
-  merge(DT_name, DT_out, all = TRUE, by = c('rd_comp', 'rd_out', 'rd_sub'))
+DP_sub <- data.table(idx = p_name[sub_idx], 
+                      NAME_SUB = l_name[sub_idx])
+DP_sub[, 
+        c('root', 'review', 'raw_data', 'rd_comp', 'rd_out', 'rd_sub', 'name') := tstrsplit(idx, "/")]
+
+DP_sub[, c('idx', 'root', 'review', 'raw_data', 'name') := NULL]
+
+DT_name <- merge(DT_name, DP_comp, 
+                 all = TRUE, by = c('rd_comp'))
+
+DT_name <- merge(DT_name, DP_out, 
+                 all = TRUE, by = c('rd_comp', 'rd_out'))
+
+DT_name <- merge(DT_name, DP_sub, 
+                 all = TRUE, by = c('rd_comp', 'rd_out', 'rd_sub'))
+
 
 ## RD_COMP
 rd_comp <-
@@ -164,15 +176,15 @@ trash <-
 
 DT <- DT_name
 
-DT <- merge(DT, DT_comp, 
-            all = TRUE, by = c('rd_comp'))
-
-DT <- merge(DT, DT_out, 
-            all = TRUE, by = c('rd_comp', 'rd_out'))
-
-DT <- merge(DT, DT_sub, 
-            all = TRUE, by = c('rd_comp', 'rd_out', 'rd_sub'))
-
+#DT <- merge(DT, DT_comp, 
+#            all = TRUE, by = c('rd_comp'))
+#
+#DT <- merge(DT, DT_out, 
+#            all = TRUE, by = c('rd_comp', 'rd_out'))
+#
+#DT <- merge(DT, DT_sub, 
+#            all = TRUE, by = c('rd_comp', 'rd_out', 'rd_sub'))
+#
 DT <- merge(DT, DT_data, 
             all = TRUE, by = c('rd_comp', 'rd_out', 'rd_sub'))
 
@@ -189,3 +201,7 @@ glabel1 <-
 
 glabel2 <-
   xml_find_all(xml, "//GLABEL2")
+
+
+p_glabel1 <- xml_path(glabel1)
+p_glabel1
