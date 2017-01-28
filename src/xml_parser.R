@@ -50,9 +50,9 @@ DT_name <-
   merge(DT_name, name_comp, all = TRUE)
 
 ## set out name
-out_idx <- grepl("RD_OUT(\\[[1-9]+\\])?/NAME$", p_name)
+out_idx <- grepl("RD_OUT(\\[[0-9]+\\])?/NAME$", p_name)
 name_out <- 
-  DT_name[!is.na(rd_out), .GRP, by = rd_out][, `:=`(GRP = NULL, NAME_OUT = l_name[out_idx])][]
+  DT_name[!is.na(rd_out), .GRP, by = .(rd_comp, rd_out)][, `:=`(GRP = NULL, NAME_OUT = l_name[out_idx])][]
 
 
 
