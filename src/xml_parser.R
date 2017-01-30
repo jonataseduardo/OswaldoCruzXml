@@ -1,8 +1,6 @@
 library(data.table)
 library(xml2)
 
-#help(package = 'xml2')
-
 xml <- read_xml("../data/CD002010RawData.xml")
 xml <- read_xml("../data/CD010388RawData.xml")
 xml <- read_xml("../data/CD003407RawData.xml")
@@ -79,7 +77,7 @@ data_node_text <-
       names(list_DT) <- cols_list
       return(list_DT[!is.na(list_DT)])
     }else{
-    return(NULL)
+      return(NULL)
     }
   }
 
@@ -142,10 +140,10 @@ data_attr <-
       list_DT <- 
         lapply(levels_list, fill_attr_DT)
 
-      names(list_DT) <- cols_list
+      names(list_DT) <- levels_list
       return(list_DT[!is.na(list_DT)])
     }else{
-    return(NULL)
+      return(NULL)
     }
   }
 
@@ -161,18 +159,23 @@ merge_dt_list <-
     return(db)
   }
 
-
-
-l_DT_attr <- data_attr(xml)
-
-l_DT
-
+l_DT_text <- 
+  lapply( 
     c("NAME",
       "GRPLABEL1",
       "GRPLABEL2",
       "GLABEL1",
       "GLABEL2",
       "EFFICACY",
-      "EFFECT_MEASURE")
+      "EFFECT_MEASURE"), 
+    function(i) data_node_text(i, xml))
 
-db
+l_DT_attr <- data_attr(xml)
+l_DT_attr
+l_DT_text
+class(c(l_DT_text, l_DT_attr))
+
+l_DT_text
+DT <- merge_dt_list(l_DT_attr)
+DT
+l_DT_attr))
