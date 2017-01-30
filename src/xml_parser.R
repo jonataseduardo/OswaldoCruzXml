@@ -65,6 +65,7 @@ data_node_text <-
             DT[, (cols_list[1:(c_idx + 1)]) := tstrsplit(PATH, "/")]
             col_text <- paste0(col_level, ':', node_pattern)
             DT[, (col_text) := ns_text[level_idx]]
+            DT[, PATH := NULL]
             return(DT[])
           }else{
             return(NA)
@@ -80,7 +81,6 @@ data_node_text <-
     return(NULL)
     }
   }
-
 
 data_attr <- 
   function(xml){
@@ -131,6 +131,7 @@ data_attr <-
                    values <- xml_attr(levels_ns[[level]], attr_col)
                    DT[, paste0(level, ":", attr_col) := values]
                  })
+            DT[, PATH := NULL]
             return(DT[])
           }else{
             return(NA)
@@ -147,10 +148,12 @@ data_attr <-
     }
   }
 
+ldata <- data_attr(xml)
 
-
-x <- data_node_text("TITLE", xml)
-x
-x <- NULL
-p_glabel1 <- xml_path(glabel2, xml)
-p_glabel1
+db <- ldata[[1]]
+for(i in 2:length(ldata)){
+ db <-
+   merge(db, ldata[[i]], 
+         all = TRUE, 
+         by = intersect(names(db), names(ldata[[i]])))
+}
