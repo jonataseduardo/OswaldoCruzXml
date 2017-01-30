@@ -7,6 +7,45 @@ xml <- read_xml("../data/CD002010RawData.xml")
 xml <- read_xml("../data/CD010388RawData.xml")
 #xml <- read_xml("../data/CD003407RawData.xml")
 
+
+find_levels <- 
+  function(xml){
+    ns_name <- 
+      xml_find_all(xml, "//NAME")
+
+    rd_data <-
+      xml_find_all(xml, "//RD_DATA")
+
+    path_rd_data <- 
+      xml_path(rd_data)
+
+    if(length(path_rd_data) > 0 ){
+
+      levels_rd <- 
+        lapply(
+          tstrsplit(path_rd_data, '/'),
+          function(p_layer){
+              gsub("(^[A-Z]+)(_[A-Z]+)?(\\[[0-9]+\\])?$", "\\1\\2", p_layer)
+          }
+          )
+
+      ?gsub
+      ?tstrsplit
+      levels_rd
+        
+
+    }else{
+      return(NULL)
+    }
+
+
+  }
+
+
+
+
+
+
 ## DATA NAMES
 ns_name <- 
   xml_find_all(xml, "//NAME")
@@ -203,5 +242,5 @@ glabel2 <-
   xml_find_all(xml, "//GLABEL2")
 
 
-p_glabel1 <- xml_path(glabel1)
+p_glabel1 <- xml_path(glabel2)
 p_glabel1
