@@ -7,42 +7,76 @@ xml <- read_xml("../data/CD002010RawData.xml")
 xml <- read_xml("../data/CD010388RawData.xml")
 #xml <- read_xml("../data/CD003407RawData.xml")
 
-
 find_levels <- 
-  function(xml){
-    ns_name <- 
-      xml_find_all(xml, "//NAME")
-
-    rd_data <-
-      xml_find_all(xml, "//RD_DATA")
-
-    path_rd_data <- 
-      xml_path(rd_data)
-
-    if(length(path_rd_data) > 0 ){
-
-      levels_rd <- 
-        lapply(
-          tstrsplit(path_rd_data, '/'),
-          function(p_layer){
-              gsub("(^[A-Z]+)(_[A-Z]+)?(\\[[0-9]+\\])?$", "\\1\\2", p_layer)
-          }
+  function(path_list, pattern = '$@#!'){
+    if(length(path_list) > 0 ){
+      levels_list <- 
+        unlist(
+          lapply(
+            tstrsplit(path_list, '/'),
+            function(p_layer){
+                xl <- gsub("(^[A-Z]+)(_[A-Z]+)?(\\[[0-9]+\\])?$", "\\1\\2", p_layer)
+                unique(xl[xl != pattern & !is.na(xl)])
+            }
           )
-
-      ?gsub
-      ?tstrsplit
-      levels_rd
-        
-
+        )
+      return(c(levels_list, pattern))
     }else{
       return(NULL)
     }
-
-
   }
 
 
+data_node_text <- 
+  function(node_pattern){
 
+    ns_list <- 
+      xml_find_all(xml, paste0("//", node_pattern))
+
+    ns_path <- 
+      xml_path(ns_list)
+
+    ns_text <- 
+      xml_text(ns_list)
+
+    cols_list <- find_levels(ns_path, node_pattern)
+
+    if(cols_list[1] == "") 
+      cols_list[1] <- 'dummy'
+
+    level_pattern <- 
+      function(col_level)
+        paste0(col_level, '(\\[[0-9]+\\])?/', node_pattern, "$")
+
+    level_index <-
+      function(col_level){
+        grepl(level_pattern(col_level), ns_path)
+      }
+   
+    col_level <- cols_list[6]
+
+    eval_level_DT <- 
+      function(col_level){
+        level_idx <- level_index(col_level)
+        if(any(level_idx)){
+          DT <- data.table(PATH = ns_path[level_idx])
+          c_idx <- which(cols_list == col_level)
+          DT[, (cols_list[1:(c_idx + 1)]) := tstrsplit(PATH, "/")]
+          col_text <- paste0(node_pattern, '_', col_level)
+          DT[, (col_text) := ns_text[level_idx]]
+          return(DT)
+        }else{
+          return(NA)
+        }
+      }
+
+    list_DT <- 
+      lapply(cols_list, eval_level_DT)
+
+    list_DT[!is.na(list_DT)]
+
+    return(list_DT)
+  }
 
 
 
@@ -103,7 +137,6 @@ DT_name <- merge(DT_name, DP_out,
 
 DT_name <- merge(DT_name, DP_sub, 
                  all = TRUE, by = c('rd_comp', 'rd_out', 'rd_sub'))
-
 
 ## RD_COMP
 rd_comp <-
