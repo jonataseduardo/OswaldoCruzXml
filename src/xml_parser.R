@@ -29,14 +29,6 @@ find_levels <-
     }
   }
 
-level_pattern <- 
-  function(col_level)
-    paste0(col_level, '(\\[[0-9]+\\])?/', node_pattern, "$")
-
-level_index <-
-  function(col_level)
-    grepl(level_pattern(col_level), ns_path)
-
 data_node_text <- 
   function(node_pattern, xml){
 
@@ -52,6 +44,14 @@ data_node_text <-
 
       cols_list <- 
         find_levels(ns_path, node_pattern)
+
+      level_pattern <- 
+        function(col_level)
+          paste0(col_level, '(\\[[0-9]+\\])?/', node_pattern, "$")
+
+      level_index <-
+        function(col_level)
+          grepl(level_pattern(col_level), ns_path)
 
       if(cols_list[1] == "") 
         cols_list[1] <- 'dummy'
@@ -102,9 +102,13 @@ data_attr <-
       levels_ns <-
         lapply(levels_list, 
                function(ll) xml_find_all(xml, paste0('//', ll)))
+      names(levels_ns) <- levels_list
+      
+      levels_path <-
+        lapply(levels_ns, xml_path)
+      names(levels_path) <- levels_list
 
-
-      levels_attrs_l <- 
+      levels_attrs_names <- 
         lapply(levels_ns, 
           function(lns){ 
             ll <- xml_attrs(lns)
@@ -114,29 +118,19 @@ data_attr <-
               return(NULL)
           }
         )
+      names(levels_attrs_names) <- levels_list
 
-      names(levels_attrs_l) <- levels_list
-      levels_attrs_l
-
-
-    fill_attr <- 
-      function(attr_cols,
-      lapply(attr_cols, 
-           function(attr_cols){ 
-             values <- xml_attr(ns_list, attr_col)
-             DT_comp[, c(attr_col) := values]
-             NULL
-           })
-
-      eval_level_DT <- 
-        function(col_level){
-          level_idx <- level_index(col_level)
-          if(any(level_idx)){
-            DT <- data.table(PATH = ns_path[level_idx])
-            c_idx <- which(cols_list == col_level)
-            DT[, (cols_list[1:(c_idx + 1)]) := tstrsplit(PATH, "/")]
-            col_text <- paste0(col_level, ':', node_pattern)
-            DT[, (col_text) := ns_text[level_idx]]
+      fill_attr_DT <- 
+        function(level){
+          if(length(levels_ns[[level]]) > 0 ){
+            DT <- data.table(PATH = levels_path[[level]])
+            l_idx <- which(levels_list == level)
+            DT[, (levels_list[1:l_idx ]) := tstrsplit(PATH, "/")]
+            lapply(levels_attrs_names[[level]], 
+                 function(attr_col){ 
+                   values <- xml_attr(levels_ns[[level]], attr_col)
+                   DT[, paste0(level, ":", attr_col) := values]
+                 })
             return(DT[])
           }else{
             return(NA)
@@ -144,7 +138,7 @@ data_attr <-
         }
 
       list_DT <- 
-        lapply(cols_list, eval_level_DT)
+        lapply(levels_list, fill_attr_DT)
 
       names(list_DT) <- cols_list
       return(list_DT[!is.na(list_DT)])
@@ -153,143 +147,6 @@ data_attr <-
     }
   }
 
-
-## RD_COMP
-rd_comp <-
-  xml_find_all(xml, "//RD_COMP")
-
-p_rd_comp <- 
-  xml_path(rd_comp)
-
-DT_comp <-  data.table(idx = 1:length(p_rd_comp))
-
-DT_comp[, 
-         c('root', 'review', 'raw_data', 'rd_comp') := tstrsplit(p_rd_comp, "/")]
-
-DT_comp[, c('idx', 'root', 'review', 'raw_data') := NULL]
-
-attr_comp <- 
-  sort(unique(unlist(lapply(xml_attrs(rd_comp), names))))
-
-trash <- 
-  lapply(attr_comp, 
-         function(attr_col){ 
-           values <- xml_attr(rd_comp, attr_col)
-           DT_comp[, c(attr_col) := values]
-           NULL
-         })
-
-DT_comp
-
-## RD_OUT
-rd_out <-
-  xml_find_all(xml, "//RD_OUT")
-
-p_rd_out <- 
-  xml_path(rd_out)
-
-DT_out <-  data.table(idx = 1:length(p_rd_out))
-
-DT_out[, 
-         c('root', 'review', 'raw_data', 'rd_comp', 'rd_out') := tstrsplit(p_rd_out, "/")]
-
-DT_out[, c('idx', 'root', 'review', 'raw_data') := NULL]
-
-attr_out <- 
-  sort(unique(unlist(lapply(xml_attrs(rd_out), names))))
-
-trash <- 
-  lapply(attr_out, 
-         function(attr_col){ 
-           values <- xml_attr(rd_out, attr_col)
-           DT_out[, c(attr_col) := values]
-           NULL
-         })
-
-DT_out
-
-## RD_SUB
-rd_sub <-
-  xml_find_all(xml, "//RD_SUB")
-
-p_rd_sub <- 
-  xml_path(rd_sub)
-
-DT_sub <-  data.table(idx = 1:length(p_rd_sub))
-
-DT_sub[, 
-         c('root', 'review', 'raw_data', 'rd_comp', 'rd_out', 'rd_sub') := tstrsplit(p_rd_sub, "/")]
-
-DT_sub[, c('idx', 'root', 'review', 'raw_data') := NULL]
-
-attr_sub <- 
-  sort(unique(unlist(lapply(xml_attrs(rd_sub), names))))
-
-trash <- 
-  lapply(attr_sub, 
-         function(attr_col){ 
-           values <- xml_attr(rd_sub, attr_col)
-           DT_sub[, c(attr_col) := values]
-           NULL
-         })
-
-DT_sub
-
-## RD_DATA
-rd_data <-
-  xml_find_all(xml, "//RD_DATA")
-
-p_rd_data <- 
-  xml_path(rd_data)
-
-DT_data <-  data.table(idx = 1:length(p_rd_data))
-
-DT_data[, 
-         c('root', 'review', 'raw_data', 'rd_comp', 'rd_out', 'rd_sub', 'rd_data') := tstrsplit(p_rd_data, "/")]
-
-DT_data[, c('idx', 'root', 'review', 'raw_data') := NULL]
-
-DT_data
-
-attr_data <- 
-  sort(unique(unlist(lapply(xml_attrs(rd_data), names))))
-
-trash <- 
-  lapply(attr_data, 
-         function(attr_col){ 
-           values <- xml_attr(rd_data, attr_col)
-           DT_data[, c(attr_col) := values]
-           NULL
-         })
-
-DT <- DT_name
-
-#DT <- merge(DT, DT_comp, 
-#            all = TRUE, by = c('rd_comp'))
-#
-#DT <- merge(DT, DT_out, 
-#            all = TRUE, by = c('rd_comp', 'rd_out'))
-#
-#DT <- merge(DT, DT_sub, 
-#            all = TRUE, by = c('rd_comp', 'rd_out', 'rd_sub'))
-#
-DT <- merge(DT, DT_data, 
-            all = TRUE, by = c('rd_comp', 'rd_out', 'rd_sub'))
-
-DT
-
-xml_path(grplabel1)
-grplabel1 <-
-  xml_find_all(xml, "//GRPLABEL1")
-
-grplabel2 <-
-  xml_find_all(xml, "//GRPLABEL2")
-
-glabel1 <-
-  xml_find_all(xml, "//COVER_SHEET")
-
-glabel2 <-
-  xml_path(xml_find_all(xml, "//TITLE"))
 
 
 x <- data_node_text("TITLE", xml)
