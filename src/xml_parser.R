@@ -6,6 +6,7 @@ library(xml2)
 xml <- read_xml("../data/CD002010RawData.xml")
 xml <- read_xml("../data/CD010388RawData.xml")
 xml <- read_xml("../data/CD003407RawData.xml")
+xml <- read_xml("../data/CD010010RawData.xml")
 
 find_levels <- 
   function(path_list, pattern = '$@#!'){
@@ -148,12 +149,30 @@ data_attr <-
     }
   }
 
-ldata <- data_attr(xml)
+merge_dt_list <-
+  function(ldata){
+    db <- ldata[[1]]
+    for(i in 2:length(ldata)){
+     db <-
+       merge(db, ldata[[i]], 
+             all = TRUE, 
+             by = intersect(names(db), names(ldata[[i]])))
+    }
+    return(db)
+  }
 
-db <- ldata[[1]]
-for(i in 2:length(ldata)){
- db <-
-   merge(db, ldata[[i]], 
-         all = TRUE, 
-         by = intersect(names(db), names(ldata[[i]])))
-}
+
+
+l_DT_attr <- data_attr(xml)
+
+l_DT
+
+    c("NAME",
+      "GRPLABEL1",
+      "GRPLABEL2",
+      "GLABEL1",
+      "GLABEL2",
+      "EFFICACY",
+      "EFFECT_MEASURE")
+
+db
