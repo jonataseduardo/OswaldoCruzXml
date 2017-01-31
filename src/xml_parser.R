@@ -1,12 +1,12 @@
 library(data.table)
 library(xml2)
 
-xml <- read_xml("../data/CD002010RawData.xml")
-xml <- read_xml("../data/CD010388RawData.xml")
-xml <- read_xml("../data/CD003407RawData.xml")
-xml <- read_xml("../data/CD010010RawData.xml")
-xml <- read_xml("../data/CD010087RawData.xml")
-xml <- read_xml("../data/CD001080RawData.xml")
+#xml <- read_xml("../data/CD002010RawData.xml")
+#xml <- read_xml("../data/CD010388RawData.xml")
+#xml <- read_xml("../data/CD003407RawData.xml")
+#xml <- read_xml("../data/CD010010RawData.xml")
+#xml <- read_xml("../data/CD010087RawData.xml")
+#xml <- read_xml("../data/CD001080RawData.xml")
 
 
 find_levels <- 
@@ -169,44 +169,60 @@ set_order <-
     ns_rd_data <- 
       xml_find_all(xml, "//RD_DATA")
 
-    rd_data_path <- 
-      xml_path(ns_rd_data)
+    if(length(ns_rd_data) > 0 ){
+      rd_data_path <- 
+        xml_path(ns_rd_data)
 
-    levels_list <- 
-      find_levels(rd_data_path)
+      levels_list <- 
+        find_levels(rd_data_path)
 
-    if(levels_list[1] == "") 
-      levels_list[1] <- 'dummy'
-  
-    get_number <- 
-      function(x) as.numeric(gsub("[^0-9.-]+", "", x ))
+      if(levels_list[1] == "") 
+        levels_list[1] <- 'dummy'
+    
+      get_number <- 
+        function(x) as.numeric(gsub("[^0-9.-]+", "", x ))
 
-    DT[,  (levels_list) := lapply(.SD, get_number), 
-       .SDcols = levels_list]
+      DT[,  (levels_list) := lapply(.SD, get_number), 
+         .SDcols = levels_list]
 
-    setkeyv(DT, levels_list)
+      setkeyv(DT, levels_list)
 
-    DT[]
+      DT[, (c(levels_list, "COVER_SHEET")) := NULL][]
+
+    }else{
+      return(NULL)
+    }
   }
 
-l_DT_text <- 
-  unlist(
-    lapply( 
-      c("TITLE",
-        "NAME",
-        "GRPLABEL1",
-        "GRPLABEL2",
-        "GLABEL1",
-        "GLABEL2",
-        "EFFICACY",
-        "EFFECT_MEASURE"), 
-      function(i) data_node_text(i, xml)), 
-     recursive = FALSE)
+parse_and_save <-
+  function(f_xml, i){
+ 
+  xml <- read_xml(f_xml)
+    
+  l_DT_text <- 
+    unlist(
+      lapply( 
+        c("TITLE",
+          "NAME",
+          "GRPLABEL1",
+          "GRPLABEL2",
+          "GLABEL1",
+          "GLABEL2",
+          "EFFICACY",
+          "EFFECT_MEASURE"), 
+        function(i) data_node_text(i, xml)), 
+       recursive = FALSE)
 
-l_DT_attr <- data_attr(xml)
+  l_DT_attr <- data_attr(xml)
 
-DT <- merge_dt_list(c(l_DT_text, l_DT_attr))
+  DT <- merge_dt_list(c(l_DT_text, l_DT_attr))
+  set_order(DT, xml)
+  
+  fwrite(DT, paste0('../results/', i, '.tsv'), sep = '\t')
+  }
 
-set_order(DT, xml)
+l_xml <- list.files("../data", pattern = '.xml', full.names = TRUE)
 
-DT
+system.time(
+mapply(parse_and_save, l_xml, 1:length(l_xml))
+)
