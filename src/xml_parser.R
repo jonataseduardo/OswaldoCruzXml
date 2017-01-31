@@ -5,6 +5,9 @@ xml <- read_xml("../data/CD002010RawData.xml")
 xml <- read_xml("../data/CD010388RawData.xml")
 xml <- read_xml("../data/CD003407RawData.xml")
 xml <- read_xml("../data/CD010010RawData.xml")
+xml <- read_xml("../data/CD010087RawData.xml")
+xml <- read_xml("../data/CD001080RawData.xml")
+
 
 find_levels <- 
   function(path_list, pattern = '$@#!'){
@@ -39,7 +42,7 @@ data_node_text <-
         xml_path(ns_list)
 
       ns_text <- 
-        xml_text(ns_list)
+        xml_text(ns_list, trim = TRUE)
 
       cols_list <- 
         find_levels(ns_path, node_pattern)
@@ -62,7 +65,7 @@ data_node_text <-
             DT <- data.table(PATH = ns_path[level_idx])
             c_idx <- which(cols_list == col_level)
             DT[, (cols_list[1:(c_idx + 1)]) := tstrsplit(PATH, "/")]
-            col_text <- paste0(col_level, ':', node_pattern)
+            col_text <- paste0(col_level, '-', node_pattern)
             DT[, (col_text) := ns_text[level_idx]]
             DT[, c('PATH', cols_list[c_idx + 1]) := NULL]
             return(DT[])
@@ -128,7 +131,7 @@ data_attr <-
             lapply(levels_attrs_names[[level]], 
                  function(attr_col){ 
                    values <- xml_attr(levels_ns[[level]], attr_col)
-                   DT[, paste0(level, ":", attr_col) := values]
+                   DT[, paste0(level, ".", attr_col) := values]
                  })
             DT[, PATH := NULL]
             return(DT[])
@@ -153,30 +156,57 @@ merge_dt_list <-
     for(i in 2:length(ldata)){
      db <-
        merge(db, ldata[[i]], 
-             all = TRUE, 
+             all.x = TRUE, 
+             all.y = TRUE,
              by = intersect(names(db), names(ldata[[i]])))
     }
     return(db)
   }
 
+set_order <- 
+  function(DT, xml){
+
+    ns_rd_data <- 
+      xml_find_all(xml, "//RD_DATA")
+
+    rd_data_path <- 
+      xml_path(ns_rd_data)
+
+    levels_list <- 
+      find_levels(rd_data_path)
+
+    if(levels_list[1] == "") 
+      levels_list[1] <- 'dummy'
+  
+    get_number <- 
+      function(x) as.numeric(gsub("[^0-9.-]+", "", x ))
+
+    DT[,  (levels_list) := lapply(.SD, get_number), 
+       .SDcols = levels_list]
+
+    setkeyv(DT, levels_list)
+
+    DT[]
+  }
+
 l_DT_text <- 
   unlist(
     lapply( 
-      c("NAME",
-        "GRPLABEL1"),
-       # "GRPLABEL2",
-       # "GLABEL1",
-       # "GLABEL2",
-       # "EFFICACY",
-       # "EFFECT_MEASURE"), 
+      c("TITLE",
+        "NAME",
+        "GRPLABEL1",
+        "GRPLABEL2",
+        "GLABEL1",
+        "GLABEL2",
+        "EFFICACY",
+        "EFFECT_MEASURE"), 
       function(i) data_node_text(i, xml)), 
      recursive = FALSE)
 
-l_DT_text
 l_DT_attr <- data_attr(xml)
-
 
 DT <- merge_dt_list(c(l_DT_text, l_DT_attr))
 
+set_order(DT, xml)
+
 DT
-DT <- NULL
