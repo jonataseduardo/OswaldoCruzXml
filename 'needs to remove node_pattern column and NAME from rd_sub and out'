@@ -64,7 +64,7 @@ data_node_text <-
             DT[, (cols_list[1:(c_idx + 1)]) := tstrsplit(PATH, "/")]
             col_text <- paste0(col_level, ':', node_pattern)
             DT[, (col_text) := ns_text[level_idx]]
-            DT[, c('PATH', cols_list[c_idx + 1]) := NULL]
+            DT[, PATH := NULL]
             return(DT[])
           }else{
             return(NA)
@@ -163,16 +163,15 @@ l_DT_text <-
   unlist(
     lapply( 
       c("NAME",
-        "GRPLABEL1"),
-       # "GRPLABEL2",
-       # "GLABEL1",
-       # "GLABEL2",
-       # "EFFICACY",
-       # "EFFECT_MEASURE"), 
+        "GRPLABEL1",
+        "GRPLABEL2",
+        "GLABEL1",
+        "GLABEL2",
+        "EFFICACY",
+        "EFFECT_MEASURE"), 
       function(i) data_node_text(i, xml)), 
      recursive = FALSE)
 
-l_DT_text
 l_DT_attr <- data_attr(xml)
 
 
